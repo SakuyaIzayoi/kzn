@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_log.h>
 #include <SDL2/SDL_vulkan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,15 +9,16 @@
 #include <vulkan/vulkan_core.h>
 
 int main(int argc, char **argv) {
+    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-        fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
     SDL_Vulkan_LoadLibrary(NULL);
 
     SDL_Window *window = SDL_CreateWindow("Kzn", 100, 100, 640, 360, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
     if (window == NULL) {
-        fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_CreateWindow Error: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
@@ -89,17 +91,16 @@ int main(int argc, char **argv) {
         }
     }
 
-    printf("Best device index: %u\n", physicalDeviceBestIndex);
-    printf("Device name: %s\n", physicalDeviceProps[physicalDeviceBestIndex].deviceName);
-    printf("Device type: ");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Best device index: %u", physicalDeviceBestIndex);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Device name: %s", physicalDeviceProps[physicalDeviceBestIndex].deviceName);
     if (discreteGPUCount != 0) {
-        printf("discrete gpu\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Device type: discrete gpu");
     } else if (integratedGPUCount != 0) {
-        printf("integrated gpu\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Device type: integrated gpu");
     } else {
-        printf("unknown\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Device type: unknown");
     }
-    printf("total memory: %lu\n", physicalDeviceMemTotal[physicalDeviceBestIndex]);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "total memory: %lu", physicalDeviceMemTotal[physicalDeviceBestIndex]);
 
     VkPhysicalDevice *physicalDevice = &(physicalDevices[physicalDeviceBestIndex]);
 
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
         float qPrior[1] = {1.0f};
         devQCreateInfos[i].pQueuePriorities = qPrior;
     }
-    printf("using %d queue families\n", qfPropCount);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "using %d queue families", qfPropCount);
 
     VkDeviceCreateInfo devCreateInfo;
     devCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -152,7 +153,7 @@ int main(int argc, char **argv) {
 
     VkDevice dev;
     vkCreateDevice(*physicalDevice, &devCreateInfo, NULL, &dev);
-    printf("logical device created\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "logical device created");
 
     // Select best queue
 
@@ -172,18 +173,18 @@ int main(int argc, char **argv) {
             qfBestIndex = qfGraphList[i];
         }
     }
-    printf("Best queue family index: %d\n", qfBestIndex);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Best queue family index: %d", qfBestIndex);
 
     VkQueue qGraph, qPres;
     vkGetDeviceQueue(dev, qfBestIndex, 0, &qGraph);
     char singleQueue = 1;
     if (qfProps[qfBestIndex].queueCount < 2) {
         vkGetDeviceQueue(dev, qfBestIndex, 0, &qPres);
-        printf("using single queue for drawing\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "using single queue for drawing");
     } else {
         singleQueue = 0;
         vkGetDeviceQueue(dev, qfBestIndex, 1, &qPres);
-        printf("using double queues for drawing\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "using double queues for drawing");
     }
 
     VkSurfaceKHR surf;
@@ -194,9 +195,9 @@ int main(int argc, char **argv) {
     vkGetPhysicalDeviceSurfaceSupportKHR(*physicalDevice, qfBestIndex, surf, &phySurfSupported);
 
     if (phySurfSupported == VK_TRUE) {
-        printf("surface supported\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "surface supported");
     } else {
-        printf("warning: surface unsupported!\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "warning: surface unsupported!");
     }
 
     // Get surface caps
@@ -211,7 +212,7 @@ int main(int argc, char **argv) {
 
     if (surfCaps.currentExtent.width != windW || surfCaps.currentExtent.height != windH) {
         extentSuitable = 0;
-        printf("actual extent size doesn't match framebuffers, resizing...\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "actual extent size doesn't match framebuffers, resizing...");
         actualExtent.width =
             windW > surfCaps
                         .maxImageExtent.width
@@ -243,9 +244,9 @@ int main(int argc, char **argv) {
     vkGetPhysicalDeviceSurfaceFormatsKHR(*physicalDevice, surf, &surfFormCount, NULL);
     VkSurfaceFormatKHR surfForms[surfFormCount];
     vkGetPhysicalDeviceSurfaceFormatsKHR(*physicalDevice, surf, &surfFormCount, surfForms);
-    printf("fetched %d surface formats\n", surfFormCount);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "fetched %d surface formats", surfFormCount);
     for (uint32_t i = 0; i < surfFormCount; i++) {
-        printf("format: %d\tcolorspace: %d\n",
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "format: %d\tcolorspace: %d",
                surfForms[i].format,
                surfForms[i].colorSpace);
     }
@@ -255,12 +256,12 @@ int main(int argc, char **argv) {
     vkGetPhysicalDeviceSurfacePresentModesKHR(*physicalDevice, surf, &presentModeCount, NULL);
     VkPresentModeKHR presentModes[presentModeCount];
     vkGetPhysicalDeviceSurfacePresentModesKHR(*physicalDevice, surf, &presentModeCount, presentModes);
-    printf("Fetched %d present modes\n", presentModeCount);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Fetched %d present modes", presentModeCount);
     char mailboxModeSupported = 0;
     for (uint32_t i = 0; i < presentModeCount; i++) {
-        printf("present mode: %d\n", presentModes[i]);
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "present mode: %d", presentModes[i]);
         if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-            printf("mailbox present mode supported\n");
+            SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "mailbox present mode supported");
             mailboxModeSupported = 1;
         }
     }
@@ -289,7 +290,7 @@ int main(int argc, char **argv) {
 
     VkSwapchainKHR swap;
     vkCreateSwapchainKHR(dev, &swapCreateInfo, NULL, &swap);
-    printf("swapchain created\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "swapchain created");
 
     // Create image views
 
@@ -297,7 +298,7 @@ int main(int argc, char **argv) {
     vkGetSwapchainImagesKHR(dev, swap, &swapImageCount, NULL);
     VkImage swapImages[swapImageCount];
     vkGetSwapchainImagesKHR(dev, swap, &swapImageCount, swapImages);
-    printf("%d images fetched from swapchain\n", swapImageCount);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "%d images fetched from swapchain", swapImageCount);
 
     VkImageView imageViews[swapImageCount];
     VkImageViewCreateInfo imageViewCreateInfos[swapImageCount];
@@ -325,7 +326,7 @@ int main(int argc, char **argv) {
         imageViewCreateInfos[i].components = imageViewRGBAComp;
         imageViewCreateInfos[i].subresourceRange = imageViewSubres;
         vkCreateImageView(dev, &imageViewCreateInfos[i], NULL, &imageViews[i]);
-        printf("image view %d created\n", i);
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "image view %d created", i);
     }
 
     // Create render pass
@@ -379,7 +380,7 @@ int main(int argc, char **argv) {
 
     VkRenderPass rendp;
     vkCreateRenderPass(dev, &rendpCreateInfo, NULL, &rendp);
-    printf("render pass created\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "render pass created");
 
     // Create pipeline
 
@@ -393,7 +394,7 @@ int main(int argc, char **argv) {
 
     if (fpVert == NULL || fpFrag == NULL) {
         shaderLoaded = 0;
-        printf("can't find SPIR-V files\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "can't find SPIR-V files");
     }
     fseek(fpVert, 0, SEEK_END);
     fseek(fpFrag, 0, SEEK_END);
@@ -408,7 +409,7 @@ int main(int argc, char **argv) {
 
     fread(pVertCode, 1, vertSize, fpVert);
     fread(pFragCode, 1, fragSize, fpFrag);
-    printf("Loaded vertex and fragment shaders\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Loaded vertex and fragment shaders");
 
     fclose(fpVert);
     fclose(fpFrag);
@@ -431,9 +432,9 @@ int main(int argc, char **argv) {
 
     VkShaderModule vertShadMod, fragShadMod;
     vkCreateShaderModule(dev, &vertShadeModCreateInfo, NULL, &vertShadMod);
-    printf("created vertex shader module\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "created vertex shader module");
     vkCreateShaderModule(dev, &fragShadeModCreateInfo, NULL, &fragShadMod);
-    printf("created fragment shader module\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "created fragment shader module");
 
     // Fill shader stage info
 
@@ -578,7 +579,7 @@ int main(int argc, char **argv) {
 
     VkPipelineLayout pipeLayout;
     vkCreatePipelineLayout(dev, &pipeLayoutCreateInfo, NULL, &pipeLayout);
-    printf("Created pipeline layout\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Created pipeline layout");
 
     // Create pipeline
     VkGraphicsPipelineCreateInfo pipeCreateInfo;
@@ -605,7 +606,7 @@ int main(int argc, char **argv) {
 
     VkPipeline pipe;
     vkCreateGraphicsPipelines(dev, VK_NULL_HANDLE, 1, &pipeCreateInfo, NULL, &pipe);
-    printf("Graphics pipeline created\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Graphics pipeline created");
 
     // Destroy shader module
     vkDestroyShaderModule(dev, fragShadMod, NULL);
@@ -633,7 +634,7 @@ int main(int argc, char **argv) {
 
         vkCreateFramebuffer(dev, &(frameBufferCreateInfos[i]),
                             NULL, &(frameBuffers[i]));
-        printf("Framebuffer %d created\n", i);
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Framebuffer %d created", i);
     }
 
     // Create command pool
@@ -645,7 +646,7 @@ int main(int argc, char **argv) {
 
     VkCommandPool cmdPool;
     vkCreateCommandPool(dev, &cmdPoolCreateInfo, NULL, &cmdPool);
-    printf("Command pool created\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Command pool created");
 
     // Allocate command buffers
     VkCommandBufferAllocateInfo cmdBuffAllocInfo;
@@ -657,7 +658,7 @@ int main(int argc, char **argv) {
 
     VkCommandBuffer cmdBuffers[swapImageCount];
     vkAllocateCommandBuffers(dev, &cmdBuffAllocInfo, cmdBuffers);
-    printf("Allocated command buffers\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Allocated command buffers");
 
     VkCommandBufferBeginInfo cmdBuffBeginInfos[swapImageCount];
     VkRenderPassBeginInfo rendpBeginInfos[swapImageCount];
@@ -688,7 +689,7 @@ int main(int argc, char **argv) {
         vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
         vkCmdEndRenderPass(cmdBuffers[i]);
         vkEndCommandBuffer(cmdBuffers[i]);
-        printf("Command buffer drawing recorded\n");
+        SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Command buffer drawing recorded");
     }
 
     // Semaphores and fences creation
@@ -712,7 +713,7 @@ int main(int argc, char **argv) {
         vkCreateSemaphore(dev, &sempCreateInfo, NULL, &(sempsRendFin[i]));
         vkCreateFence(dev, &fenCreateInfo, NULL, &(fens[i]));
     }
-    printf("Created semaphores and fences\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Created semaphores and fences");
 
     uint32_t currFrame = 0;
     VkFence fensImg[swapImageCount];
@@ -785,7 +786,7 @@ int main(int argc, char **argv) {
     }
 
     vkDeviceWaitIdle(dev);
-    printf("command buffers finished\n");
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "command buffers finished");
 
     // Cleanup
     vkFreeCommandBuffers(dev, cmdPool, swapImageCount, cmdBuffers);
