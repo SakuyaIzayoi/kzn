@@ -7,23 +7,22 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-int main(int argc, char **argv)
-{
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-		fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
-		return EXIT_FAILURE;
-	}
+int main(int argc, char **argv) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+        fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
+        return EXIT_FAILURE;
+    }
     SDL_Vulkan_LoadLibrary(NULL);
 
-	SDL_Window* window = SDL_CreateWindow("Kzn", 100, 100, 640, 360, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
-	if (window == NULL) {
-		fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
-		return EXIT_FAILURE;
-	}
+    SDL_Window *window = SDL_CreateWindow("Kzn", 100, 100, 640, 360, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
+    if (window == NULL) {
+        fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
+        return EXIT_FAILURE;
+    }
 
     uint32_t extensionCount;
     SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, NULL);
-    const char** extensionNames = (const char**)malloc(extensionCount * sizeof(char*));
+    const char **extensionNames = (const char **)malloc(extensionCount * sizeof(char *));
     SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionNames);
     const struct VkInstanceCreateInfo instInfo = {
         VK_STRUCTURE_TYPE_EVENT_CREATE_INFO,
@@ -33,8 +32,7 @@ int main(int argc, char **argv)
         0,
         NULL,
         extensionCount,
-        extensionNames
-    };
+        extensionNames};
     VkInstance vkInst;
     vkCreateInstance(&instInfo, NULL, &vkInst);
 
@@ -62,7 +60,7 @@ int main(int argc, char **argv)
         } else if (physicalDeviceProps[i].deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
             integratedGPUList[integratedGPUCount] = i;
             integratedGPUCount++;
-        } 
+        }
 
         vkGetPhysicalDeviceMemoryProperties(physicalDevices[i], &physicalDeviceMemProps[i]);
         physicalDeviceMemCount[i] = physicalDeviceMemProps[i].memoryHeapCount;
@@ -141,13 +139,13 @@ int main(int argc, char **argv)
     uint32_t devExtCount = 1;
     devCreateInfo.enabledExtensionCount = devExtCount;
     char ppDevExts[devExtCount][VK_MAX_EXTENSION_NAME_SIZE];
-    strcpy(ppDevExts[0],"VK_KHR_swapchain");
+    strcpy(ppDevExts[0], "VK_KHR_swapchain");
     char *ppDevExtNames[devExtCount];
     for (uint32_t i = 0; i < devExtCount; i++) {
         ppDevExtNames[i] = ppDevExts[i];
     }
-    devCreateInfo.ppEnabledExtensionNames = (const char * const *)ppDevExtNames;
-    
+    devCreateInfo.ppEnabledExtensionNames = (const char *const *)ppDevExtNames;
+
     VkPhysicalDeviceFeatures physicalDeviceFeatures;
     vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
     devCreateInfo.pEnabledFeatures = &physicalDeviceFeatures;
@@ -161,7 +159,7 @@ int main(int argc, char **argv)
     uint32_t qfGraphCount = 0;
     uint32_t qfGraphList[qfPropCount];
     for (uint32_t i = 0; i < qfPropCount; i++) {
-        if ((qfProps[i].queueFlags &VK_QUEUE_GRAPHICS_BIT) != 0) {
+        if ((qfProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
             qfGraphList[qfGraphCount] = i;
             qfGraphCount++;
         }
@@ -211,37 +209,34 @@ int main(int argc, char **argv)
     actualExtent.width = windW;
     actualExtent.height = windH;
 
-    if(surfCaps.currentExtent.width
-			!=windW
-			||surfCaps.currentExtent.height
-			!=windH){
-		extentSuitable=0;
-		printf("actual extent size doesn't match framebuffers, resizing...\n");
-		actualExtent.width=
-			windW>surfCaps
-			.maxImageExtent.width?
-			surfCaps
-			.maxImageExtent.width
-			:windW;
-		actualExtent.width=
-			windW<surfCaps
-			.minImageExtent.width?
-			surfCaps
-			.minImageExtent.width
-			:windW;
-		actualExtent.height=
-			windH>surfCaps
-			.maxImageExtent.height?
-			surfCaps
-			.maxImageExtent.height
-			:windH;
-		actualExtent.height=
-			windH<surfCaps
-			.minImageExtent.height?
-			surfCaps
-			.minImageExtent.height
-			:windH;
-	}
+    if (surfCaps.currentExtent.width != windW || surfCaps.currentExtent.height != windH) {
+        extentSuitable = 0;
+        printf("actual extent size doesn't match framebuffers, resizing...\n");
+        actualExtent.width =
+            windW > surfCaps
+                        .maxImageExtent.width
+                ? surfCaps
+                      .maxImageExtent.width
+                : windW;
+        actualExtent.width =
+            windW < surfCaps
+                        .minImageExtent.width
+                ? surfCaps
+                      .minImageExtent.width
+                : windW;
+        actualExtent.height =
+            windH > surfCaps
+                        .maxImageExtent.height
+                ? surfCaps
+                      .maxImageExtent.height
+                : windH;
+        actualExtent.height =
+            windH < surfCaps
+                        .minImageExtent.height
+                ? surfCaps
+                      .minImageExtent.height
+                : windH;
+    }
 
     // Fetch surface formats
     uint32_t surfFormCount;
@@ -252,8 +247,7 @@ int main(int argc, char **argv)
     for (uint32_t i = 0; i < surfFormCount; i++) {
         printf("format: %d\tcolorspace: %d\n",
                surfForms[i].format,
-               surfForms[i].colorSpace
-           );
+               surfForms[i].colorSpace);
     }
 
     // Fetch surface present mode
@@ -285,13 +279,11 @@ int main(int argc, char **argv)
     swapCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     swapCreateInfo.imageSharingMode = singleQueue ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
     swapCreateInfo.queueFamilyIndexCount = singleQueue ? 0 : 2;
-    uint32_t qfIndices[2] = { 0, 1 };
+    uint32_t qfIndices[2] = {0, 1};
     swapCreateInfo.pQueueFamilyIndices = singleQueue ? NULL : qfIndices;
     swapCreateInfo.preTransform = surfCaps.currentTransform;
     swapCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    swapCreateInfo.presentMode = mailboxModeSupported ?
-        VK_PRESENT_MODE_MAILBOX_KHR :
-        VK_PRESENT_MODE_FIFO_KHR;
+    swapCreateInfo.presentMode = mailboxModeSupported ? VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_FIFO_KHR;
     swapCreateInfo.clipped = VK_TRUE;
     swapCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -337,7 +329,7 @@ int main(int argc, char **argv)
     }
 
     // Create render pass
-    
+
     VkAttachmentDescription attachDesc;
     attachDesc.flags = 0;
     attachDesc.format = swapCreateInfo.imageFormat;
@@ -383,7 +375,7 @@ int main(int argc, char **argv)
     rendpCreateInfo.subpassCount = 1;
     rendpCreateInfo.pSubpasses = &subpDesc;
     rendpCreateInfo.dependencyCount = 1;
-    rendpCreateInfo.pDependencies= &subpDep;
+    rendpCreateInfo.pDependencies = &subpDep;
 
     VkRenderPass rendp;
     vkCreateRenderPass(dev, &rendpCreateInfo, NULL, &rendp);
@@ -391,7 +383,7 @@ int main(int argc, char **argv)
 
     // Create pipeline
 
-    // Load Shaders    
+    // Load Shaders
     FILE *fpVert = NULL;
     FILE *fpFrag = NULL;
 
@@ -408,8 +400,8 @@ int main(int argc, char **argv)
     uint32_t vertSize = ftell(fpVert);
     uint32_t fragSize = ftell(fpFrag);
 
-    char *pVertCode = (char*)malloc(vertSize*sizeof(char));
-    char *pFragCode = (char*)malloc(fragSize*sizeof(char));
+    char *pVertCode = (char *)malloc(vertSize * sizeof(char));
+    char *pFragCode = (char *)malloc(fragSize * sizeof(char));
 
     rewind(fpVert);
     rewind(fpFrag);
@@ -422,20 +414,20 @@ int main(int argc, char **argv)
     fclose(fpFrag);
 
     // Create shader modules
-    
+
     VkShaderModuleCreateInfo vertShadeModCreateInfo;
     vertShadeModCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     vertShadeModCreateInfo.pNext = NULL;
     vertShadeModCreateInfo.flags = 0;
     vertShadeModCreateInfo.codeSize = shaderLoaded ? vertSize : 0;
-    vertShadeModCreateInfo.pCode = shaderLoaded ? (const uint32_t*)pVertCode : NULL;
+    vertShadeModCreateInfo.pCode = shaderLoaded ? (const uint32_t *)pVertCode : NULL;
 
     VkShaderModuleCreateInfo fragShadeModCreateInfo;
     fragShadeModCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     fragShadeModCreateInfo.pNext = NULL;
     fragShadeModCreateInfo.flags = 0;
     fragShadeModCreateInfo.codeSize = shaderLoaded ? fragSize : 0;
-    fragShadeModCreateInfo.pCode = shaderLoaded ? (const uint32_t*)pFragCode : NULL;
+    fragShadeModCreateInfo.pCode = shaderLoaded ? (const uint32_t *)pFragCode : NULL;
 
     VkShaderModule vertShadMod, fragShadMod;
     vkCreateShaderModule(dev, &vertShadeModCreateInfo, NULL, &vertShadMod);
@@ -674,7 +666,7 @@ int main(int argc, char **argv)
     rendpArea.offset.x = 0;
     rendpArea.offset.y = 0;
     rendpArea.extent = swapCreateInfo.imageExtent;
-    VkClearValue clearVal = {{ 0.0f, 0.2f, 0.8f, 0.0f }};
+    VkClearValue clearVal = {{0.0f, 0.2f, 0.8f, 0.0f}};
 
     for (uint32_t i = 0; i < swapImageCount; i++) {
         cmdBuffBeginInfos[i].sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -730,9 +722,9 @@ int main(int argc, char **argv)
 
     // MAIN PRESENTATION PART
     int running = 1;
-    while(running) {
+    while (running) {
         SDL_Event event;
-        while(SDL_PollEvent(&event))
+        while (SDL_PollEvent(&event))
             if (event.type == SDL_QUIT) {
                 running = 0;
                 break;
@@ -812,19 +804,19 @@ int main(int argc, char **argv)
     vkDestroyPipelineLayout(dev, pipeLayout, NULL);
     vkDestroyRenderPass(dev, rendp, NULL);
 
-    for(uint32_t i = 0; i < swapImageCount; i++) {
+    for (uint32_t i = 0; i < swapImageCount; i++) {
         vkDestroyImageView(dev, imageViews[i], NULL);
     }
 
     vkDestroySwapchainKHR(dev, swap, NULL);
     vkDestroySurfaceKHR(vkInst, surf, NULL);
-	SDL_DestroyWindow(window);
+    SDL_DestroyWindow(window);
 
     vkDestroyDevice(dev, NULL);
     vkDestroyInstance(vkInst, NULL);
 
     SDL_Vulkan_UnloadLibrary();
-	SDL_Quit();
+    SDL_Quit();
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
