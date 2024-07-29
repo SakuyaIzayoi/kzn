@@ -407,8 +407,14 @@ int main(int argc, char **argv) {
     rewind(fpVert);
     rewind(fpFrag);
 
-    fread(pVertCode, 1, vertSize, fpVert);
-    fread(pFragCode, 1, fragSize, fpFrag);
+    if (fread(pVertCode, 1, vertSize, fpVert) != vertSize) {
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Error reading vertex shader");
+        return EXIT_FAILURE;
+    }
+    if (fread(pFragCode, 1, fragSize, fpFrag) != fragSize) {
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Error reading fragment shader");
+        return EXIT_FAILURE;
+    }
     SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Loaded vertex and fragment shaders");
 
     fclose(fpVert);
@@ -667,7 +673,7 @@ int main(int argc, char **argv) {
     rendpArea.offset.x = 0;
     rendpArea.offset.y = 0;
     rendpArea.extent = swapCreateInfo.imageExtent;
-    VkClearValue clearVal = {{0.0f, 0.2f, 0.8f, 0.0f}};
+    VkClearValue clearVal = {{{0.0f, 0.2f, 0.8f, 0.0f}}};
 
     for (uint32_t i = 0; i < swapImageCount; i++) {
         cmdBuffBeginInfos[i].sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
