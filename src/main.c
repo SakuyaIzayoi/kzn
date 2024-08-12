@@ -8,6 +8,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
+#include "vk_fun.h"
+
 int main(int argc, char **argv) {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
@@ -22,21 +24,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    uint32_t extensionCount;
-    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, NULL);
-    const char **extensionNames = (const char **)malloc(extensionCount * sizeof(char *));
-    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionNames);
-    const struct VkInstanceCreateInfo instInfo = {
-        VK_STRUCTURE_TYPE_EVENT_CREATE_INFO,
-        NULL,
-        0,
-        NULL,
-        0,
-        NULL,
-        extensionCount,
-        extensionNames};
-    VkInstance vkInst;
-    vkCreateInstance(&instInfo, NULL, &vkInst);
+    VkInstance vkInst = createInstance(window);
 
     uint32_t physicalDeviceCount;
     vkEnumeratePhysicalDevices(vkInst, &physicalDeviceCount, NULL);
@@ -207,8 +195,8 @@ int main(int argc, char **argv) {
     int windW, windH;
     SDL_Vulkan_GetDrawableSize(window, &windW, &windH);
     VkExtent2D actualExtent;
-    actualExtent.width = windW;
-    actualExtent.height = windH;
+    actualExtent.width = (uint32_t)windW;
+    actualExtent.height = (uint32_t)windH;
 
     if (surfCaps.currentExtent.width != windW || surfCaps.currentExtent.height != windH) {
         extentSuitable = 0;
@@ -218,25 +206,25 @@ int main(int argc, char **argv) {
                         .maxImageExtent.width
                 ? surfCaps
                       .maxImageExtent.width
-                : windW;
+                : (uint32_t)windW;
         actualExtent.width =
             windW < surfCaps
                         .minImageExtent.width
                 ? surfCaps
                       .minImageExtent.width
-                : windW;
+                : (uint32_t)windW;
         actualExtent.height =
             windH > surfCaps
                         .maxImageExtent.height
                 ? surfCaps
                       .maxImageExtent.height
-                : windH;
+                : (uint32_t)windH;
         actualExtent.height =
             windH < surfCaps
                         .minImageExtent.height
                 ? surfCaps
                       .minImageExtent.height
-                : windH;
+                : (uint32_t)windH;
     }
 
     // Fetch surface formats
@@ -398,8 +386,8 @@ int main(int argc, char **argv) {
     }
     fseek(fpVert, 0, SEEK_END);
     fseek(fpFrag, 0, SEEK_END);
-    uint32_t vertSize = ftell(fpVert);
-    uint32_t fragSize = ftell(fpFrag);
+    uint32_t vertSize = (uint32_t)ftell(fpVert);
+    uint32_t fragSize = (uint32_t)ftell(fpFrag);
 
     char *pVertCode = (char *)malloc(vertSize * sizeof(char));
     char *pFragCode = (char *)malloc(fragSize * sizeof(char));
@@ -820,7 +808,7 @@ int main(int argc, char **argv) {
     SDL_DestroyWindow(window);
 
     vkDestroyDevice(dev, NULL);
-    vkDestroyInstance(vkInst, NULL);
+    deleteInstance(&vkInst);
 
     SDL_Vulkan_UnloadLibrary();
     SDL_Quit();

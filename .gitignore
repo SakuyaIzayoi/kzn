@@ -1,3 +1,6 @@
 *.o
 *.spv
 kzn
+compile_commands.json
+build
+.cache
