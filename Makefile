@@ -1,6 +1,9 @@
 CC?=clang
 SDL2FLAGS=$(shell pkg-config sdl2 --cflags --libs)
-CFLAGS?=-std=c17 -O2 -g -Wall -pedantic -Wshadow -Wstrict-aliasing -Wstrict-overflow
+CFLAGS?=-std=c17 -O2 -g -Wall -pedantic -Wshadow -Wstrict-aliasing -Wstrict-overflow \
+		-Wformat -Wformat=2 -Wconversion -Wimplicit-fallthrough -Werror=format-security \
+		-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fPIE -pie -fcf-protection=full \
+		-Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion
 LDFLAGS?=-lvulkan
 
 .PHONY: all shaders debug clean release
