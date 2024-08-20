@@ -4,7 +4,7 @@
 #include <vulkan/vulkan_core.h>
 
 SDL_Window *createVulkanWindow(int width, int height, const char *title) {
-    SDL_Window *window = SDL_CreateWindow(title, 100, 100, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
+    SDL_Window *window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
     if (window == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_CreateWindow Error: %s", SDL_GetError());
         window = VK_NULL_HANDLE;
