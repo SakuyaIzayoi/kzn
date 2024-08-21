@@ -57,4 +57,5 @@ void deleteImageViews(VkDevice *device, VkImageView **image_views, uint32_t imag
     for (uint32_t i = 0; i < image_view_count; i++) {
         vkDestroyImageView(*device, (*image_views)[i], VK_NULL_HANDLE);
     }
+    free(*image_views);
 }

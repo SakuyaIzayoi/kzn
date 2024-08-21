@@ -14,7 +14,7 @@ LDFLAGS := -lvulkan -pie
 SDL2FLAGS := $(shell pkg-config sdl2 --cflags --libs)
 
 ifeq ($(debug), 1)
-	CFLAGS := $(CFLAGS) -g -O0
+	CFLAGS := $(CFLAGS) -g -O1 -fsanitize=address -fno-omit-frame-pointer
 else
 	CFLAGS := $(CFLAGS) -O2
 endif
